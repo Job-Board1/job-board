@@ -9,4 +9,4 @@ Input Validation: Ensure proper input validation for job listings and job applic
 Technologies Stack: Use React for the frontend with one of the specified UI libraries. For the backend, use Node.js along with either MySQL or MongoDB.
 React Router: Utilize React Router for smooth navigation within the job board.
 Database (if using MySQL): Use Sequelize as an ORM for interacting with the MySQL database.
-In each project, it's important to prioritize user experience, data integrity, and security. These improved descriptions and requirements provide a more detailed framework for students to follow during the sprint.
+In each project, it's important to prioritize user experience, data integrity, and security. These improved descriptions and requirements provide a more detailed framework for students to follow during the sprint. senior project
