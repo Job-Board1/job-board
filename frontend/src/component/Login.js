@@ -72,7 +72,7 @@ const Login = (props) => {
     const verified = !Object.keys(inputErrorHandler).some((obj) => {
       return inputErrorHandler[obj].error;
     });
-    console.log(verified)
+    // console.log(verified)
     if (verified) {
       axios
         .post(apiList.login, loginDetails)
