@@ -84,6 +84,7 @@ const MultifieldInput = (props) => {
         <Button
           variant="contained"
           color="secondary"
+          style={{ backgroundColor: "darkred" }}
           onClick={() =>
             setEducation([
               ...education,
@@ -284,6 +285,7 @@ const Profile = (props) => {
                   uploadTo={apiList.uploadResume}
                   handleInput={handleInput}
                   identifier={"resume"}
+                  style={{ backgroundColor: "gray", color: "white" }}
                 />
               </Grid>
               <Grid item>
@@ -300,7 +302,7 @@ const Profile = (props) => {
             <Button
               variant="contained"
               color="primary"
-              style={{ padding: "10px 50px", marginTop: "30px" }}
+              style={{ padding: "10px 50px", marginTop: "30px", backgroundColor: "darkorange"  }}
               onClick={() => handleUpdate()}
             >
               Update Details

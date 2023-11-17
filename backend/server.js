@@ -7,11 +7,11 @@ const fs = require("fs");
 
 // MongoDB
 mongoose
-  .connect("mongodb://127.0.0.1:27017/jobPortal", {
+  .connect("mongodb://localhost:27017/jobPortal", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    // useCreateIndex: true,
-    // useFindAndModify: false,
+    useCreateIndex: true,
+    useFindAndModify: false,
   })
   .then((res) => console.log("Connected to DB"))
   .catch((err) => console.log(err));
@@ -28,7 +28,6 @@ if (!fs.existsSync("./public/profile")) {
 }
 
 const app = express();
-app.use (express.json())
 const port = 4444;
 
 app.use(bodyParser.json()); // support json encoded bodies

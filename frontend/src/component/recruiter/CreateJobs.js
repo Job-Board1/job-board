@@ -52,43 +52,44 @@ const CreateJobs = (props) => {
       [key]: value,
     });
   };
+  const HandleUpdate = () => {
+    console.log("Creating job with details:", jobDetails);
 
-  const handleUpdate = () => {
-    console.log(jobDetails);
-    axios
-      .post(apiList.jobs, jobDetails, {
+    axios.post(apiList.jobs, jobDetails, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      })
-      .then((response) => {
+    })
+    .then((response) => {
+        console.log("Job creation successful:", response);
         setPopup({
-          open: true,
-          severity: "success",
-          message: response.data.message,
+            open: true,
+            severity: "success",
+            message: response.data.message,
         });
         setJobDetails({
-          title: "",
-          maxApplicants: 100,
-          maxPositions: 30,
-          deadline: new Date(new Date().getTime() + 10 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .substr(0, 16),
-          skillsets: [],
-          jobType: "Full Time",
-          duration: 0,
-          salary: 0,
+            title: "",
+            maxApplicants: 100,
+            maxPositions: 30,
+            deadline: new Date(new Date().getTime() + 10 * 24 * 60 * 60 * 1000)
+                .toISOString()
+                .substr(0, 16),
+            skillsets: [],
+            jobType: "Full Time",
+            duration: 0,
+            salary: 0,
         });
-      })
-      .catch((err) => {
+    })
+    .catch((err) => {
+        console.error("Error creating job:", err);
         setPopup({
-          open: true,
-          severity: "error",
-          message: err.response.data.message,
+            open: true,
+            severity: "error",
+            message: err.response?.data?.message || "Unknown error occurred",
         });
-        console.log(err.response);
-      });
-  };
+    });
+};
+
 
   return (
     <>
@@ -168,7 +169,7 @@ const CreateJobs = (props) => {
                   >
                     <MenuItem value="Full Time">Full Time</MenuItem>
                     <MenuItem value="Part Time">Part Time</MenuItem>
-                    <MenuItem value="Work From Home">Work From Home</MenuItem>
+                    <MenuItem value="Work From Home">Remotely</MenuItem>
                   </TextField>
                 </Grid>
                 <Grid item>
@@ -249,8 +250,8 @@ const CreateJobs = (props) => {
               <Button
                 variant="contained"
                 color="primary"
-                style={{ padding: "10px 50px", marginTop: "30px" }}
-                onClick={() => handleUpdate()}
+                style={{ padding: "10px 50px", marginTop: "30px", backgroundColor: "darkgreen"}}
+                onClick={() => HandleUpdate()}
               >
                 Create Job
               </Button>

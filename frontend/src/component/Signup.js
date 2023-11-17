@@ -95,6 +95,7 @@ const MultifieldInput = (props) => {
         <Button
           variant="contained"
           color="secondary"
+          style={{ backgroundColor: "darkred" }}
           onClick={() =>
             setEducation([
               ...education,
@@ -394,6 +395,7 @@ const Login = (props) => {
         {signupDetails.type === "applicant" ? (
           <>
             <MultifieldInput
+              style={{ backgroundColor: "darkred" }}
               education={education}
               setEducation={setEducation}
             />
@@ -413,6 +415,13 @@ const Login = (props) => {
                 className={classes.inputBox}
                 label="Resume (.pdf)"
                 icon={<DescriptionIcon />}
+                // value={files.resume}
+                // onChange={(event) =>
+                //   setFiles({
+                //     ...files,
+                //     resume: event.target.files[0],
+                //   })
+                // }
                 uploadTo={apiList.uploadResume}
                 handleInput={handleInput}
                 identifier={"resume"}
@@ -423,9 +432,17 @@ const Login = (props) => {
                 className={classes.inputBox}
                 label="Profile Photo (.jpg/.png)"
                 icon={<FaceIcon />}
+                // value={files.profileImage}
+                // onChange={(event) =>
+                //   setFiles({
+                //     ...files,
+                //     profileImage: event.target.files[0],
+                //   })
+                // }
                 uploadTo={apiList.uploadProfileImage}
                 handleInput={handleInput}
                 identifier={"profile"}
+              
               />
             </Grid>
           </>
@@ -464,6 +481,7 @@ const Login = (props) => {
           <Button
             variant="contained"
             color="primary"
+          style={{backgroundColor: "darkgreen"}}  
             onClick={() => {
               signupDetails.type === "applicant"
                 ? handleLogin()
@@ -480,3 +498,24 @@ const Login = (props) => {
 };
 
 export default Login;
+
+// {/* <Grid item>
+//           <PasswordInput
+//             label="Re-enter Password"
+//             value={signupDetails.tmpPassword}
+//             onChange={(event) => handleInput("tmpPassword", event.target.value)}
+//             className={classes.inputBox}
+//             labelWidth={140}
+//             helperText={inputErrorHandler.tmpPassword.message}
+//             error={inputErrorHandler.tmpPassword.error}
+//             onBlur={(event) => {
+//               if (event.target.value !== signupDetails.password) {
+//                 handleInputError(
+//                   "tmpPassword",
+//                   true,
+//                   "Passwords are not same."
+//                 );
+//               }
+//             }}
+//           />
+//         </Grid> */}

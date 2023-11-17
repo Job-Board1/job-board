@@ -177,7 +177,7 @@ const Profile = (props) => {
                 }}
               >
                 <PhoneInput
-                  country={"tn"}
+                  country={"in"}
                   value={phone}
                   onChange={(phone) => setPhone(phone)}
                   style={{ width: "auto" }}
@@ -187,7 +187,7 @@ const Profile = (props) => {
             <Button
               variant="contained"
               color="primary"
-              style={{ padding: "10px 50px", marginTop: "30px" }}
+              style={{ padding: "10px 50px", marginTop: "30px", background: "darkorange"}}
               onClick={() => handleUpdate()}
             >
               Update Details

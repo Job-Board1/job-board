@@ -180,6 +180,7 @@ const JobTile = (props) => {
             <Button
               variant="contained"
               color="primary"
+              style={{backgroundColor: "darkgreen"}}
               className={classes.statusBlock}
               onClick={() => handleClick(`/job/applications/${job._id}`)}
             >
@@ -193,10 +194,7 @@ const JobTile = (props) => {
               onClick={() => {
                 setOpenUpdate(true);
               }}
-              style={{
-                background: "#FC7A1E",
-                color: "#fff",
-              }}
+              style={{ background: "darkorange"}}
             >
               Update Details
             </Button>
@@ -205,6 +203,7 @@ const JobTile = (props) => {
             <Button
               variant="contained"
               color="secondary"
+              style={{backgroundColor: "darkred"}}
               className={classes.statusBlock}
               onClick={() => {
                 setOpen(true);
@@ -326,7 +325,8 @@ const JobTile = (props) => {
               <Button
                 variant="contained"
                 color="secondary"
-                style={{ padding: "10px 50px" }}
+                style={{ padding: "10px 50px", background: "orange" }}
+            
                 onClick={() => handleJobUpdate()}
               >
                 Update

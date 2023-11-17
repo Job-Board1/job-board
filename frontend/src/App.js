@@ -16,7 +16,6 @@ import JobApplications from "./component/recruiter/JobApplications";
 import AcceptedApplicants from "./component/recruiter/AcceptedApplicants";
 import RecruiterProfile from "./component/recruiter/Profile";
 import MessagePopup from "./lib/MessagePopup";
-
 import isAuth, { userType } from "./lib/isAuth";
 
 const useStyles = makeStyles((theme) => ({
@@ -29,6 +28,9 @@ const useStyles = makeStyles((theme) => ({
     paddingTop: "64px",
     boxSizing: "border-box",
     width: "100%",
+    backgroundImage: 'url("https://img.freepik.com/premium-photo/conversation-managers-employees-office-blurred-photo_709984-1922.jpg")',
+    backgroundSize: "cover", // You can adjust this property based on your needs
+    backgroundRepeat: "no-repeat",
   },
 }));
 

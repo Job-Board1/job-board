@@ -7,6 +7,7 @@ const JobApplicant = require("../db/JobApplicant");
 const Recruiter = require("../db/Recruiter");
 const Job = require("../db/Job");
 const Application = require("../db/Application");
+const Rating = require("../db/Rating");
 
 const router = express.Router();
 
@@ -42,16 +43,24 @@ router.post("/jobs", jwtAuth, (req, res) => {
     .then(() => {
       res.json({ message: "Job added successfully to the database" });
     })
-    .catch((err) => {
-      res.status(400).json(err);
+    .catch((error) => {
+      console.error("Error creating job:", error);
+      res.status(500).json({ message: "Internal Server Error" });
     });
 });
 
+// to get all the jobs [pagination] [for recruiter personal and for everyone]
 router.get("/jobs", jwtAuth, (req, res) => {
   let user = req.user;
 
   let findParams = {};
   let sortParams = {};
+
+  // const page = parseInt(req.query.page) ? parseInt(req.query.page) : 1;
+  // const limit = parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
+  // const skip = page - 1 >= 0 ? (page - 1) * limit : 0;
+
+  // to list down jobs posted by a particular recruiter
   if (user.type === "recruiter" && req.query.myjobs) {
     findParams = {
       ...findParams,
@@ -159,6 +168,10 @@ router.get("/jobs", jwtAuth, (req, res) => {
 
   console.log(findParams);
   console.log(sortParams);
+
+  // Job.find(findParams).collation({ locale: "en" }).sort(sortParams);
+  // .skip(skip)
+  // .limit(limit)
 
   let arr = [
     {
@@ -470,6 +483,12 @@ router.post("/jobs/:id/applications", jwtAuth, (req, res) => {
   const data = req.body;
   const jobId = req.params.id;
 
+  // check whether applied previously
+  // find job
+  // check count of active applications < limit
+  // check user had < 10 active applications && check if user is not having any accepted jobs (user id)
+  // store the data in applications
+
   Application.findOne({
     userId: user._id,
     jobId: jobId,
@@ -579,6 +598,10 @@ router.get("/jobs/:id/applications", jwtAuth, (req, res) => {
   }
   const jobId = req.params.id;
 
+  // const page = parseInt(req.query.page) ? parseInt(req.query.page) : 1;
+  // const limit = parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
+  // const skip = page - 1 >= 0 ? (page - 1) * limit : 0;
+
   let findParams = {
     jobId: jobId,
     recruiterId: user._id,
@@ -594,9 +617,10 @@ router.get("/jobs/:id/applications", jwtAuth, (req, res) => {
   }
 
   Application.find(findParams)
-    .collation({ locale: "Tn" })
+    .collation({ locale: "en" })
     .sort(sortParams)
-
+    // .skip(skip)
+    // .limit(limit)
     .then((applications) => {
       res.json(applications);
     })
@@ -608,6 +632,10 @@ router.get("/jobs/:id/applications", jwtAuth, (req, res) => {
 // recruiter/applicant gets all his applications [pagination]
 router.get("/applications", jwtAuth, (req, res) => {
   const user = req.user;
+
+  // const page = parseInt(req.query.page) ? parseInt(req.query.page) : 1;
+  // const limit = parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
+  // const skip = page - 1 >= 0 ? (page - 1) * limit : 0;
 
   Application.aggregate([
     {
@@ -662,8 +690,21 @@ router.put("/applications/:id", jwtAuth, (req, res) => {
   const id = req.params.id;
   const status = req.body.status;
 
+  // "applied", // when a applicant is applied
+  // "shortlisted", // when a applicant is shortlisted
+  // "accepted", // when a applicant is accepted
+  // "rejected", // when a applicant is rejected
+  // "deleted", // when any job is deleted
+  // "cancelled", // an application is cancelled by its author or when other application is accepted
+  // "finished", // when job is over
+
   if (user.type === "recruiter") {
     if (status === "accepted") {
+      // get job id from application
+      // get job info for maxPositions count
+      // count applications that are already accepted
+      // compare and if condition is satisfied, then save
+
       Application.findOne({
         _id: id,
         recruiterId: user._id,
@@ -836,6 +877,7 @@ router.put("/applications/:id", jwtAuth, (req, res) => {
 });
 
 // get a list of final applicants for current job : recruiter
+// get a list of final applicants for all his jobs : recuiter
 router.get("/applicants", jwtAuth, (req, res) => {
   const user = req.user;
   if (user.type === "recruiter") {
@@ -939,4 +981,401 @@ router.get("/applicants", jwtAuth, (req, res) => {
     });
   }
 });
+
+// to add or update a rating [todo: test]
+router.put("/rating", jwtAuth, (req, res) => {
+  const user = req.user;
+  const data = req.body;
+  if (user.type === "recruiter") {
+    // can rate applicant
+    Rating.findOne({
+      senderId: user._id,
+      receiverId: data.applicantId,
+      category: "applicant",
+    })
+      .then((rating) => {
+        if (rating === null) {
+          console.log("new rating");
+          Application.countDocuments({
+            userId: data.applicantId,
+            recruiterId: user._id,
+            status: {
+              $in: ["accepted", "finished"],
+            },
+          })
+            .then((acceptedApplicant) => {
+              if (acceptedApplicant > 0) {
+                // add a new rating
+
+                rating = new Rating({
+                  category: "applicant",
+                  receiverId: data.applicantId,
+                  senderId: user._id,
+                  rating: data.rating,
+                });
+
+                rating
+                  .save()
+                  .then(() => {
+                    // get the average of ratings
+                    Rating.aggregate([
+                      {
+                        $match: {
+                          receiverId: mongoose.Types.ObjectId(data.applicantId),
+                          category: "applicant",
+                        },
+                      },
+                      {
+                        $group: {
+                          _id: {},
+                          average: { $avg: "$rating" },
+                        },
+                      },
+                    ])
+                      .then((result) => {
+                        // update the user's rating
+                        if (result === null) {
+                          res.status(400).json({
+                            message: "Error while calculating rating",
+                          });
+                          return;
+                        }
+                        const avg = result[0].average;
+
+                        JobApplicant.findOneAndUpdate(
+                          {
+                            userId: data.applicantId,
+                          },
+                          {
+                            $set: {
+                              rating: avg,
+                            },
+                          }
+                        )
+                          .then((applicant) => {
+                            if (applicant === null) {
+                              res.status(400).json({
+                                message:
+                                  "Error while updating applicant's average rating",
+                              });
+                              return;
+                            }
+                            res.json({
+                              message: "Rating added successfully",
+                            });
+                          })
+                          .catch((err) => {
+                            res.status(400).json(err);
+                          });
+                      })
+                      .catch((err) => {
+                        res.status(400).json(err);
+                      });
+                  })
+                  .catch((err) => {
+                    res.status(400).json(err);
+                  });
+              } else {
+                // you cannot rate
+                res.status(400).json({
+                  message:
+                    "Applicant didn't worked under you. Hence you cannot give a rating.",
+                });
+              }
+            })
+            .catch((err) => {
+              res.status(400).json(err);
+            });
+        } else {
+          rating.rating = data.rating;
+          rating
+            .save()
+            .then(() => {
+              // get the average of ratings
+              Rating.aggregate([
+                {
+                  $match: {
+                    receiverId: mongoose.Types.ObjectId(data.applicantId),
+                    category: "applicant",
+                  },
+                },
+                {
+                  $group: {
+                    _id: {},
+                    average: { $avg: "$rating" },
+                  },
+                },
+              ])
+                .then((result) => {
+                  // update the user's rating
+                  if (result === null) {
+                    res.status(400).json({
+                      message: "Error while calculating rating",
+                    });
+                    return;
+                  }
+                  const avg = result[0].average;
+                  JobApplicant.findOneAndUpdate(
+                    {
+                      userId: data.applicantId,
+                    },
+                    {
+                      $set: {
+                        rating: avg,
+                      },
+                    }
+                  )
+                    .then((applicant) => {
+                      if (applicant === null) {
+                        res.status(400).json({
+                          message:
+                            "Error while updating applicant's average rating",
+                        });
+                        return;
+                      }
+                      res.json({
+                        message: "Rating updated successfully",
+                      });
+                    })
+                    .catch((err) => {
+                      res.status(400).json(err);
+                    });
+                })
+                .catch((err) => {
+                  res.status(400).json(err);
+                });
+            })
+            .catch((err) => {
+              res.status(400).json(err);
+            });
+        }
+      })
+      .catch((err) => {
+        res.status(400).json(err);
+      });
+  } else {
+    // applicant can rate job
+    Rating.findOne({
+      senderId: user._id,
+      receiverId: data.jobId,
+      category: "job",
+    })
+      .then((rating) => {
+        console.log(user._id);
+        console.log(data.jobId);
+        console.log(rating);
+        if (rating === null) {
+          console.log(rating);
+          Application.countDocuments({
+            userId: user._id,
+            jobId: data.jobId,
+            status: {
+              $in: ["accepted", "finished"],
+            },
+          })
+            .then((acceptedApplicant) => {
+              if (acceptedApplicant > 0) {
+                // add a new rating
+
+                rating = new Rating({
+                  category: "job",
+                  receiverId: data.jobId,
+                  senderId: user._id,
+                  rating: data.rating,
+                });
+
+                rating
+                  .save()
+                  .then(() => {
+                    // get the average of ratings
+                    Rating.aggregate([
+                      {
+                        $match: {
+                          receiverId: mongoose.Types.ObjectId(data.jobId),
+                          category: "job",
+                        },
+                      },
+                      {
+                        $group: {
+                          _id: {},
+                          average: { $avg: "$rating" },
+                        },
+                      },
+                    ])
+                      .then((result) => {
+                        if (result === null) {
+                          res.status(400).json({
+                            message: "Error while calculating rating",
+                          });
+                          return;
+                        }
+                        const avg = result[0].average;
+                        Job.findOneAndUpdate(
+                          {
+                            _id: data.jobId,
+                          },
+                          {
+                            $set: {
+                              rating: avg,
+                            },
+                          }
+                        )
+                          .then((foundJob) => {
+                            if (foundJob === null) {
+                              res.status(400).json({
+                                message:
+                                  "Error while updating job's average rating",
+                              });
+                              return;
+                            }
+                            res.json({
+                              message: "Rating added successfully",
+                            });
+                          })
+                          .catch((err) => {
+                            res.status(400).json(err);
+                          });
+                      })
+                      .catch((err) => {
+                        res.status(400).json(err);
+                      });
+                  })
+                  .catch((err) => {
+                    res.status(400).json(err);
+                  });
+              } else {
+                // you cannot rate
+                res.status(400).json({
+                  message:
+                    "You haven't worked for this job. Hence you cannot give a rating.",
+                });
+              }
+            })
+            .catch((err) => {
+              res.status(400).json(err);
+            });
+        } else {
+          // update the rating
+          rating.rating = data.rating;
+          rating
+            .save()
+            .then(() => {
+              // get the average of ratings
+              Rating.aggregate([
+                {
+                  $match: {
+                    receiverId: mongoose.Types.ObjectId(data.jobId),
+                    category: "job",
+                  },
+                },
+                {
+                  $group: {
+                    _id: {},
+                    average: { $avg: "$rating" },
+                  },
+                },
+              ])
+                .then((result) => {
+                  if (result === null) {
+                    res.status(400).json({
+                      message: "Error while calculating rating",
+                    });
+                    return;
+                  }
+                  const avg = result[0].average;
+                  console.log(avg);
+
+                  Job.findOneAndUpdate(
+                    {
+                      _id: data.jobId,
+                    },
+                    {
+                      $set: {
+                        rating: avg,
+                      },
+                    }
+                  )
+                    .then((foundJob) => {
+                      if (foundJob === null) {
+                        res.status(400).json({
+                          message: "Error while updating job's average rating",
+                        });
+                        return;
+                      }
+                      res.json({
+                        message: "Rating added successfully",
+                      });
+                    })
+                    .catch((err) => {
+                      res.status(400).json(err);
+                    });
+                })
+                .catch((err) => {
+                  res.status(400).json(err);
+                });
+            })
+            .catch((err) => {
+              res.status(400).json(err);
+            });
+        }
+      })
+      .catch((err) => {
+        res.status(400).json(err);
+      });
+  }
+});
+
+// get personal rating
+router.get("/rating", jwtAuth, (req, res) => {
+  const user = req.user;
+  Rating.findOne({
+    senderId: user._id,
+    receiverId: req.query.id,
+    category: user.type === "recruiter" ? "applicant" : "job",
+  }).then((rating) => {
+    if (rating === null) {
+      res.json({
+        rating: -1,
+      });
+      return;
+    }
+    res.json({
+      rating: rating.rating,
+    });
+  });
+});
+
+// Application.findOne({
+//   _id: id,
+//   userId: user._id,
+// })
+//   .then((application) => {
+//     application.status = status;
+//     application
+//       .save()
+//       .then(() => {
+//         res.json({
+//           message: `Application ${status} successfully`,
+//         });
+//       })
+//       .catch((err) => {
+//         res.status(400).json(err);
+//       });
+//   })
+//   .catch((err) => {
+//     res.status(400).json(err);
+//   });
+
+// router.get("/jobs", (req, res, next) => {
+//   passport.authenticate("jwt", { session: false }, function (err, user, info) {
+//     if (err) {
+//       return next(err);
+//     }
+//     if (!user) {
+//       res.status(401).json(info);
+//       return;
+//     }
+//   })(req, res, next);
+// });
+
 module.exports = router;

@@ -19,6 +19,7 @@ const useStyles = makeStyles((theme) => ({
   title: {
     flexGrow: 1,
   },
+ 
 }));
 
 const Navbar = (props) => {
@@ -31,10 +32,10 @@ const Navbar = (props) => {
   };
 
   return (
-    <AppBar position="fixed">
+    <AppBar position="fixed" style={{ backgroundColor: "darkgreen" }}>
       <Toolbar>
         <Typography variant="h6" className={classes.title}>
-        Job Board
+          Job Board
         </Typography>
         {isAuth() ? (
           userType() === "recruiter" ? (
